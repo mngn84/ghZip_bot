@@ -1,24 +1,36 @@
-import { Api, Bot, Context, RawApi } from "grammy";
+import { Api, Bot, RawApi, session } from "grammy";
 import dotenv from "dotenv";
-import { setListeners } from "./listeners";
+import { setListeners } from "./listeners/listeners";
 import { setErrorHandler } from "./errorHandlers";
+import { initGroups } from "./states";
+import { setKeyListeners } from "./listeners/keysListeners";
+import { MyContext } from "./interfaces";
+import { initial } from "./middlewares/session";
+import { privateChat } from "./middlewares/privateChat";
 
 dotenv.config();
 
 const initBot = async (): Promise<void> => {
-    try {
-        if (!process.env.BOT_TOKEN) {
-            throw new Error('BOT_TOKEN необходим для работы бота');
-        }
+    if (!process.env.BOT_TOKEN) {
+        throw new Error('BOT_TOKEN необходим для работы бота');
+    }
 
-        const bot: Bot<Context, Api<RawApi>> = new Bot(process.env.BOT_TOKEN);
+    try {
+        const bot: Bot<MyContext, Api<RawApi>> = new Bot(process.env.BOT_TOKEN);
+
+        initGroups();
+        bot.use(privateChat);
+        bot.use(session({ initial }));
 
         await bot.api.setMyCommands([
-            { command: 'start', description: 'активировать бота в чате' },
             { command: 'help', description: 'помощь' },
-        ]);
+            { command: 'addtogroup', description: 'добавить в группу' },
+        ], {
+            scope: { type: 'all_private_chats' }
+        });
 
         setListeners(bot);
+        setKeyListeners(bot);
         setErrorHandler(bot);
 
         await bot.start();

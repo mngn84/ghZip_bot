@@ -1,6 +1,7 @@
 import { Api, Bot, BotError, Context, GrammyError, HttpError } from "grammy";
+import { MyContext } from "./interfaces";
 
-export const setErrorHandler = (bot: Bot<Context, Api>): void => {
+export const setErrorHandler = (bot: Bot<MyContext, Api>): void => {
     bot.catch((err: BotError) => {
         const ctx: Context = err.ctx;
         console.error(`Ошибка при обработке обновления ${ctx.update.update_id}:`);
